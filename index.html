@@ -1,0 +1,1284 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Board Duel</title>
+  <meta name="theme-color" content="#10140f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Board Duel">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="board-duel-icon.svg">
+  <link rel="icon" href="board-duel-icon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10140f;
+      --panel: #192118;
+      --panel-2: #222b1d;
+      --ink: #f6f1df;
+      --muted: #b7b092;
+      --line: rgba(246, 241, 223, 0.18);
+      --accent: #c9a64b;
+      --green: #4f8f3b;
+      --green-2: #76b85d;
+      --red: #b75a4a;
+      --light-square: #d8bc75;
+      --dark-square: #476a38;
+      --wood: #7b5735;
+      --wood-2: #2b2118;
+      --white-piece: #f2ead0;
+      --black-piece: #29231d;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.38);
+      font-family: ui-rounded, "SF Pro Rounded", "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100svh;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(118, 184, 93, 0.18), transparent 32rem),
+        radial-gradient(circle at 90% 12%, rgba(201, 166, 75, 0.13), transparent 28rem),
+        var(--bg);
+      color: var(--ink);
+      overscroll-behavior: none;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .app {
+      width: min(100%, 560px);
+      min-height: 100svh;
+      margin: 0 auto;
+      padding: max(14px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-rows: auto auto auto 1fr auto;
+      gap: 12px;
+    }
+
+    .top {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1;
+      letter-spacing: 0;
+      font-weight: 700;
+    }
+
+    .mode {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 5px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab {
+      border: 0;
+      color: var(--muted);
+      background: transparent;
+      border-radius: 13px;
+      padding: 11px 10px;
+      font-weight: 800;
+    }
+
+    .tab.active {
+      color: #1e190d;
+      background: var(--accent);
+      box-shadow: 0 6px 18px rgba(201, 166, 75, 0.26);
+    }
+
+    .status {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 52px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(25, 33, 24, 0.84);
+      box-shadow: var(--shadow);
+    }
+
+    .status strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .status span {
+      color: var(--muted);
+      display: block;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .screen {
+      display: none;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .screen.active {
+      display: grid;
+    }
+
+    .board-shell {
+      border-radius: 22px;
+      padding: 10px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .chess-board {
+      width: 100%;
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      overflow: hidden;
+      border-radius: 16px;
+      border: 1px solid rgba(0, 0, 0, 0.24);
+      background: var(--dark-square);
+      position: relative;
+      touch-action: none;
+    }
+
+    .square {
+      border: 0;
+      width: 100%;
+      height: 100%;
+      aspect-ratio: 1;
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      font-size: clamp(27px, 9vw, 44px);
+      line-height: 1;
+      color: var(--ink);
+      position: relative;
+      padding: 0;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .square.light {
+      background: var(--light-square);
+    }
+
+    .square.dark {
+      background: var(--dark-square);
+    }
+
+    .square.selected::after {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border: 3px solid var(--accent);
+      border-radius: 12px;
+    }
+
+    .square.target::before {
+      content: "";
+      position: absolute;
+      width: 28%;
+      height: 28%;
+      border-radius: 50%;
+      background: rgba(16, 20, 15, 0.33);
+    }
+
+    .square.capture::before {
+      content: "";
+      position: absolute;
+      inset: 9px;
+      border-radius: 50%;
+      border: 3px solid rgba(183, 90, 74, 0.72);
+    }
+
+    .piece-white {
+      color: #fff7dc;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.46);
+    }
+
+    .piece-black {
+      color: #181711;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
+    }
+
+    .drag-piece {
+      position: fixed;
+      z-index: 30;
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      pointer-events: none;
+      font-size: 42px;
+      transform: translate(-50%, -50%);
+      filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.44));
+    }
+
+    .captures {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .capture-box {
+      min-height: 44px;
+      padding: 9px 10px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .capture-box b {
+      color: var(--ink);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .actions.single {
+      grid-template-columns: 1fr;
+    }
+
+    .action {
+      border: 1px solid var(--line);
+      color: var(--ink);
+      background: var(--panel);
+      border-radius: 16px;
+      min-height: 48px;
+      font-weight: 850;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+    }
+
+    .action.primary {
+      background: var(--accent);
+      color: #1d180d;
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .backgammon {
+      border-radius: 22px;
+      padding: 16px;
+      background:
+        radial-gradient(circle at 28% 12%, rgba(255, 228, 170, 0.28), transparent 26%),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.32) 0 3%, transparent 3% 46.5%, rgba(12, 6, 3, 0.58) 46.5% 53.5%, transparent 53.5% 97%, rgba(0, 0, 0, 0.32) 97% 100%),
+        linear-gradient(135deg, #a36f3e 0%, #6d4224 42%, #27180d 100%);
+      border: 1px solid rgba(255, 232, 183, 0.3);
+      box-shadow: var(--shadow), inset 0 2px 0 rgba(255, 255, 255, 0.14), inset 0 -18px 36px rgba(0, 0, 0, 0.32);
+      display: grid;
+      gap: 8px;
+      min-height: 570px;
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .backgammon::before {
+      content: "";
+      position: absolute;
+      inset: 9px;
+      border: 2px solid rgba(255, 233, 185, 0.2);
+      border-radius: 17px;
+      box-shadow: inset 0 0 0 5px rgba(30, 15, 7, 0.32), inset 0 0 34px rgba(255, 228, 174, 0.08);
+      pointer-events: none;
+    }
+
+    .backgammon::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(255, 255, 255, 0.18), transparent 18%, transparent 72%, rgba(255, 255, 255, 0.06));
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+
+    .points {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr) 14px repeat(6, 1fr);
+      gap: 2px;
+      min-height: 220px;
+      position: relative;
+      z-index: 1;
+      background:
+        linear-gradient(90deg, rgba(0, 0, 0, 0.2), transparent 18%, transparent 82%, rgba(0, 0, 0, 0.18)),
+        rgba(32, 17, 8, 0.28);
+      border-radius: 12px;
+      padding: 4px;
+      box-shadow: inset 0 1px 10px rgba(0, 0, 0, 0.28);
+    }
+
+    .point {
+      border: 0;
+      min-width: 0;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 5px 1px;
+      background: transparent;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    .point::before {
+      content: "";
+      position: absolute;
+      left: 7%;
+      right: 7%;
+      z-index: 0;
+      opacity: 0.94;
+    }
+
+    .top-points .point::before {
+      top: 0;
+      border-left: clamp(10px, 3vw, 16px) solid transparent;
+      border-right: clamp(10px, 3vw, 16px) solid transparent;
+      border-top: 198px solid var(--tri);
+      filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.22));
+    }
+
+    .bottom-points .point {
+      flex-direction: column-reverse;
+    }
+
+    .bottom-points .point::before {
+      bottom: 0;
+      border-left: clamp(10px, 3vw, 16px) solid transparent;
+      border-right: clamp(10px, 3vw, 16px) solid transparent;
+      border-bottom: 198px solid var(--tri);
+      filter: drop-shadow(0 -6px 6px rgba(0, 0, 0, 0.22));
+    }
+
+    .point:nth-child(odd) {
+      --tri: #f0c56f;
+    }
+
+    .point:nth-child(even) {
+      --tri: #2f5b36;
+    }
+
+    .point.selected {
+      outline: 3px solid var(--accent);
+      outline-offset: -3px;
+      border-radius: 9px;
+    }
+
+    .point.target {
+      background: rgba(201, 166, 75, 0.18);
+      border-radius: 9px;
+    }
+
+    .checker {
+      width: min(32px, 7.8vw);
+      height: min(32px, 7.8vw);
+      border-radius: 50%;
+      border: 2px solid rgba(0, 0, 0, 0.28);
+      position: relative;
+      z-index: 1;
+      margin: -1px 0;
+      box-shadow: inset 0 3px 7px rgba(255, 255, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.3);
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      font-weight: 900;
+      overflow: hidden;
+    }
+
+    .checker::before {
+      content: "";
+      position: absolute;
+      inset: 4px 6px auto;
+      height: 34%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.34);
+      pointer-events: none;
+    }
+
+    .checker.white {
+      background: var(--white-piece);
+      color: #3b3120;
+    }
+
+    .checker.black {
+      background: var(--black-piece);
+      color: #f2ead0;
+    }
+
+    .midrail {
+      min-height: 86px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      border-top: 2px solid rgba(255, 233, 185, 0.14);
+      border-bottom: 2px solid rgba(255, 233, 185, 0.14);
+      position: relative;
+      z-index: 1;
+      background: rgba(9, 5, 3, 0.18);
+      border-radius: 12px;
+    }
+
+    .midrail::before {
+      content: "";
+      position: absolute;
+      top: -8px;
+      bottom: -8px;
+      left: calc(50% - 6px);
+      width: 12px;
+      border-radius: 999px;
+      background: linear-gradient(#3b2518, #1a110b);
+      box-shadow: inset 0 0 0 1px rgba(255, 233, 185, 0.12);
+      pointer-events: none;
+    }
+
+    .bar {
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: var(--ink);
+      min-height: 54px;
+      border-radius: 14px;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.3));
+      font-size: 12px;
+      font-weight: 850;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dice {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 9px;
+      flex-wrap: wrap;
+      min-width: 92px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .die {
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 11px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 7px;
+      background:
+        radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.95), transparent 24%),
+        linear-gradient(145deg, #fff7df, #d6c292 55%, #8f7647);
+      color: #24190d;
+      box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.75), inset 0 -6px 10px rgba(80, 48, 16, 0.34), 0 9px 18px rgba(0, 0, 0, 0.34);
+      cursor: grab;
+      touch-action: none;
+      position: relative;
+    }
+
+    .die:active {
+      cursor: grabbing;
+    }
+
+    .die.ready {
+      animation: dicePulse 1.8s ease-in-out infinite;
+    }
+
+    .die.dragging {
+      position: fixed;
+      z-index: 40;
+      pointer-events: none;
+      transform: translate(-50%, -50%) rotate(12deg) scale(1.08);
+    }
+
+    .pip {
+      width: 7px;
+      height: 7px;
+      align-self: center;
+      justify-self: center;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #5b3922, #130d08 72%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+      opacity: 0;
+    }
+
+    .die[data-value="1"] .pip:nth-child(5),
+    .die[data-value="2"] .pip:nth-child(1),
+    .die[data-value="2"] .pip:nth-child(9),
+    .die[data-value="3"] .pip:nth-child(1),
+    .die[data-value="3"] .pip:nth-child(5),
+    .die[data-value="3"] .pip:nth-child(9),
+    .die[data-value="4"] .pip:nth-child(1),
+    .die[data-value="4"] .pip:nth-child(3),
+    .die[data-value="4"] .pip:nth-child(7),
+    .die[data-value="4"] .pip:nth-child(9),
+    .die[data-value="5"] .pip:nth-child(1),
+    .die[data-value="5"] .pip:nth-child(3),
+    .die[data-value="5"] .pip:nth-child(5),
+    .die[data-value="5"] .pip:nth-child(7),
+    .die[data-value="5"] .pip:nth-child(9),
+    .die[data-value="6"] .pip:nth-child(1),
+    .die[data-value="6"] .pip:nth-child(3),
+    .die[data-value="6"] .pip:nth-child(4),
+    .die[data-value="6"] .pip:nth-child(6),
+    .die[data-value="6"] .pip:nth-child(7),
+    .die[data-value="6"] .pip:nth-child(9) {
+      opacity: 1;
+    }
+
+    .die.used {
+      opacity: 0.35;
+    }
+
+    .dice-hint {
+      flex-basis: 100%;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .dice-drop {
+      outline: 3px solid rgba(201, 166, 75, 0.78);
+      outline-offset: -8px;
+    }
+
+    @keyframes dicePulse {
+      0%, 100% {
+        transform: translateY(0) rotate(-2deg);
+      }
+      50% {
+        transform: translateY(-3px) rotate(2deg);
+      }
+    }
+
+    .bearoff {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      padding: 0 4px;
+    }
+
+    .fine-print {
+      color: var(--muted);
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 370px) {
+      .app {
+        padding-left: 9px;
+        padding-right: 9px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      .points {
+        min-height: 188px;
+      }
+
+      .top-points .point::before {
+        border-top-width: 166px;
+      }
+
+      .bottom-points .point::before {
+        border-bottom-width: 166px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <div>
+        <h1>Board Duel</h1>
+        <div class="mode">Local multiplayer for iPhone</div>
+      </div>
+      <div class="pill" id="gameTurn">White turn</div>
+    </header>
+
+    <nav class="tabs" aria-label="Choose game">
+      <button class="tab active" data-game="chess" type="button">Chess</button>
+      <button class="tab" data-game="backgammon" type="button">Backgammon</button>
+    </nav>
+
+    <section class="status" aria-live="polite">
+      <div>
+        <strong id="statusTitle">Chess: White to move</strong>
+        <span id="statusText">Tap a piece, then tap a highlighted square.</span>
+      </div>
+      <div class="pill" id="moveCount">0 moves</div>
+    </section>
+
+    <section class="screen active" id="chessScreen">
+      <div class="board-shell">
+        <div class="chess-board" id="chessBoard" aria-label="Chess board"></div>
+      </div>
+      <div class="captures">
+        <div class="capture-box"><b>White captured</b><span id="whiteCaptured">none</span></div>
+        <div class="capture-box"><b>Black captured</b><span id="blackCaptured">none</span></div>
+      </div>
+      <div class="actions">
+        <button class="action" id="flipChess" type="button">Flip board</button>
+        <button class="action primary" id="newChess" type="button">New chess</button>
+      </div>
+    </section>
+
+    <section class="screen" id="backgammonScreen">
+      <div class="backgammon">
+        <div class="bearoff">
+          <span id="blackOff">Black off: 0</span>
+          <span id="whiteOff">White off: 0</span>
+        </div>
+        <div class="points top-points" id="topPoints"></div>
+        <div class="midrail">
+          <button class="bar" id="blackBar" type="button">Black bar 0</button>
+          <div class="dice" id="dice"></div>
+          <button class="bar" id="whiteBar" type="button">White bar 0</button>
+        </div>
+        <div class="points bottom-points" id="bottomPoints"></div>
+      </div>
+      <div class="actions single">
+        <button class="action" id="newBackgammon" type="button">New backgammon</button>
+      </div>
+    </section>
+
+    <div class="fine-print">Drag the dice onto the backgammon board to roll.</div>
+  </main>
+
+  <script>
+    const pieceIcon = {
+      wK: "♔", wQ: "♕", wR: "♖", wB: "♗", wN: "♘", wP: "♙",
+      bK: "♚", bQ: "♛", bR: "♜", bB: "♝", bN: "♞", bP: "♟"
+    };
+
+    const state = {
+      game: "chess",
+      chess: {
+        board: [],
+        turn: "w",
+        selected: null,
+        moves: [],
+        flipped: false,
+        captures: { w: [], b: [] },
+        moveCount: 0,
+        drag: null,
+        suppressClick: false
+      },
+      bg: {
+        points: [],
+        turn: "w",
+        dice: [],
+        used: [],
+        selected: null,
+        bar: { w: 0, b: 0 },
+        off: { w: 0, b: 0 },
+        moveCount: 0,
+        diceDrag: null
+      }
+    };
+
+    const statusTitle = document.getElementById("statusTitle");
+    const statusText = document.getElementById("statusText");
+    const gameTurn = document.getElementById("gameTurn");
+    const moveCount = document.getElementById("moveCount");
+    const chessBoard = document.getElementById("chessBoard");
+    const whiteCaptured = document.getElementById("whiteCaptured");
+    const blackCaptured = document.getElementById("blackCaptured");
+    const topPoints = document.getElementById("topPoints");
+    const bottomPoints = document.getElementById("bottomPoints");
+    const diceEl = document.getElementById("dice");
+    const whiteBar = document.getElementById("whiteBar");
+    const blackBar = document.getElementById("blackBar");
+    const whiteOff = document.getElementById("whiteOff");
+    const blackOff = document.getElementById("blackOff");
+
+    function colorName(color) {
+      return color === "w" ? "White" : "Black";
+    }
+
+    function setStatus(title, text) {
+      statusTitle.textContent = title;
+      statusText.textContent = text;
+    }
+
+    function setGame(game) {
+      state.game = game;
+      document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.game === game));
+      document.getElementById("chessScreen").classList.toggle("active", game === "chess");
+      document.getElementById("backgammonScreen").classList.toggle("active", game === "backgammon");
+      updateHeader();
+    }
+
+    function updateHeader() {
+      if (state.game === "chess") {
+        gameTurn.textContent = `${colorName(state.chess.turn)} turn`;
+        moveCount.textContent = `${state.chess.moveCount} moves`;
+        setStatus(`Chess: ${colorName(state.chess.turn)} to move`, state.chess.selected ? "Choose a highlighted destination." : "Tap a piece, then tap a highlighted square.");
+      } else {
+        gameTurn.textContent = `${colorName(state.bg.turn)} turn`;
+        moveCount.textContent = `${state.bg.moveCount} moves`;
+        const diceLeft = state.bg.dice.filter((_, i) => !state.bg.used[i]);
+        setStatus(`Backgammon: ${colorName(state.bg.turn)} to move`, diceLeft.length ? `Use dice: ${diceLeft.join(", ")}` : "Drag the dice onto the board to roll.");
+      }
+    }
+
+    function initialChessBoard() {
+      return [
+        ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
+        ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        [null, null, null, null, null, null, null, null],
+        ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
+        ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
+      ];
+    }
+
+    function resetChess() {
+      state.chess.board = initialChessBoard();
+      state.chess.turn = "w";
+      state.chess.selected = null;
+      state.chess.moves = [];
+      state.chess.captures = { w: [], b: [] };
+      state.chess.moveCount = 0;
+      renderChess();
+      updateHeader();
+    }
+
+    function inBoard(r, c) {
+      return r >= 0 && r < 8 && c >= 0 && c < 8;
+    }
+
+    function addSlideMoves(moves, r, c, color, directions) {
+      directions.forEach(([dr, dc]) => {
+        let nr = r + dr;
+        let nc = c + dc;
+        while (inBoard(nr, nc)) {
+          const target = state.chess.board[nr][nc];
+          if (!target) {
+            moves.push([nr, nc]);
+          } else {
+            if (target[0] !== color) moves.push([nr, nc]);
+            break;
+          }
+          nr += dr;
+          nc += dc;
+        }
+      });
+    }
+
+    function legalChessMoves(r, c) {
+      const piece = state.chess.board[r][c];
+      if (!piece) return [];
+      const color = piece[0];
+      const type = piece[1];
+      const moves = [];
+      const forward = color === "w" ? -1 : 1;
+      if (type === "P") {
+        const one = r + forward;
+        if (inBoard(one, c) && !state.chess.board[one][c]) {
+          moves.push([one, c]);
+          const start = color === "w" ? 6 : 1;
+          const two = r + forward * 2;
+          if (r === start && !state.chess.board[two][c]) moves.push([two, c]);
+        }
+        [-1, 1].forEach(dc => {
+          const nr = r + forward;
+          const nc = c + dc;
+          if (inBoard(nr, nc) && state.chess.board[nr][nc] && state.chess.board[nr][nc][0] !== color) moves.push([nr, nc]);
+        });
+      }
+      if (type === "N") {
+        [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]].forEach(([dr, dc]) => {
+          const nr = r + dr;
+          const nc = c + dc;
+          if (inBoard(nr, nc) && (!state.chess.board[nr][nc] || state.chess.board[nr][nc][0] !== color)) moves.push([nr, nc]);
+        });
+      }
+      if (type === "B") addSlideMoves(moves, r, c, color, [[-1, -1], [-1, 1], [1, -1], [1, 1]]);
+      if (type === "R") addSlideMoves(moves, r, c, color, [[-1, 0], [1, 0], [0, -1], [0, 1]]);
+      if (type === "Q") addSlideMoves(moves, r, c, color, [[-1, -1], [-1, 1], [1, -1], [1, 1], [-1, 0], [1, 0], [0, -1], [0, 1]]);
+      if (type === "K") {
+        for (let dr = -1; dr <= 1; dr += 1) {
+          for (let dc = -1; dc <= 1; dc += 1) {
+            if (dr || dc) {
+              const nr = r + dr;
+              const nc = c + dc;
+              if (inBoard(nr, nc) && (!state.chess.board[nr][nc] || state.chess.board[nr][nc][0] !== color)) moves.push([nr, nc]);
+            }
+          }
+        }
+      }
+      return moves;
+    }
+
+    function sameSquare(a, b) {
+      return a && b && a[0] === b[0] && a[1] === b[1];
+    }
+
+    function moveChessPiece(r, c) {
+      if (state.chess.selected && state.chess.moves.some(move => sameSquare(move, [r, c]))) {
+        const [sr, sc] = state.chess.selected;
+        const moving = state.chess.board[sr][sc];
+        const captured = state.chess.board[r][c];
+        if (captured) state.chess.captures[moving[0]].push(captured);
+        state.chess.board[r][c] = moving;
+        state.chess.board[sr][sc] = null;
+        if (moving[1] === "P" && (r === 0 || r === 7)) state.chess.board[r][c] = `${moving[0]}Q`;
+        state.chess.turn = state.chess.turn === "w" ? "b" : "w";
+        state.chess.selected = null;
+        state.chess.moves = [];
+        state.chess.moveCount += 1;
+        renderChess();
+        updateHeader();
+        return true;
+      }
+      return false;
+    }
+
+    function selectChessPiece(r, c) {
+      const piece = state.chess.board[r][c];
+      if (piece && piece[0] === state.chess.turn) {
+        state.chess.selected = [r, c];
+        state.chess.moves = legalChessMoves(r, c);
+        renderChess();
+        updateHeader();
+        return true;
+      }
+      return false;
+    }
+
+    function tapChess(r, c) {
+      if (state.chess.suppressClick) {
+        state.chess.suppressClick = false;
+        return;
+      }
+      if (moveChessPiece(r, c)) return;
+      const piece = state.chess.board[r][c];
+      if (piece && piece[0] === state.chess.turn) {
+        state.chess.selected = [r, c];
+        state.chess.moves = legalChessMoves(r, c);
+      } else {
+        state.chess.selected = null;
+        state.chess.moves = [];
+      }
+      renderChess();
+      updateHeader();
+    }
+
+    function makeDragGhost(piece, event) {
+      const ghost = document.createElement("div");
+      ghost.className = `drag-piece ${piece[0] === "w" ? "piece-white" : "piece-black"}`;
+      ghost.textContent = pieceIcon[piece];
+      ghost.style.left = `${event.clientX}px`;
+      ghost.style.top = `${event.clientY}px`;
+      document.body.appendChild(ghost);
+      return ghost;
+    }
+
+    function beginChessDrag(event, r, c) {
+      const piece = state.chess.board[r][c];
+      if (!piece || piece[0] !== state.chess.turn) return;
+      event.preventDefault();
+      selectChessPiece(r, c);
+      state.chess.suppressClick = true;
+      state.chess.drag = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        moved: false,
+        ghost: makeDragGhost(piece, event)
+      };
+    }
+
+    function moveChessDrag(event) {
+      const drag = state.chess.drag;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      const dx = event.clientX - drag.startX;
+      const dy = event.clientY - drag.startY;
+      if (Math.hypot(dx, dy) > 7) drag.moved = true;
+      drag.ghost.style.left = `${event.clientX}px`;
+      drag.ghost.style.top = `${event.clientY}px`;
+    }
+
+    function endChessDrag(event) {
+      const drag = state.chess.drag;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      drag.ghost.remove();
+      state.chess.drag = null;
+      if (!drag.moved) return;
+      window.setTimeout(() => {
+        state.chess.suppressClick = false;
+      }, 400);
+      const target = document.elementFromPoint(event.clientX, event.clientY);
+      const square = target ? target.closest(".square") : null;
+      if (square && square.dataset.row !== undefined) {
+        const moved = moveChessPiece(Number(square.dataset.row), Number(square.dataset.col));
+        if (moved) return;
+      }
+      renderChess();
+      updateHeader();
+    }
+
+    function renderChess() {
+      chessBoard.innerHTML = "";
+      const order = [];
+      for (let r = 0; r < 8; r += 1) {
+        for (let c = 0; c < 8; c += 1) {
+          order.push(state.chess.flipped ? [7 - r, 7 - c] : [r, c]);
+        }
+      }
+      order.forEach(([r, c]) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `square ${(r + c) % 2 ? "dark" : "light"}`;
+        button.dataset.row = String(r);
+        button.dataset.col = String(c);
+        const piece = state.chess.board[r][c];
+        if (piece) {
+          button.textContent = pieceIcon[piece];
+          button.classList.add(piece[0] === "w" ? "piece-white" : "piece-black");
+        }
+        if (sameSquare(state.chess.selected, [r, c])) button.classList.add("selected");
+        const isMove = state.chess.moves.some(move => sameSquare(move, [r, c]));
+        if (isMove) button.classList.add(piece ? "capture" : "target");
+        button.setAttribute("aria-label", `${String.fromCharCode(97 + c)}${8 - r}${piece ? ` ${piece}` : ""}`);
+        button.addEventListener("pointerdown", event => beginChessDrag(event, r, c));
+        button.addEventListener("click", () => tapChess(r, c));
+        chessBoard.appendChild(button);
+      });
+      whiteCaptured.textContent = state.chess.captures.w.map(piece => pieceIcon[piece]).join(" ") || "none";
+      blackCaptured.textContent = state.chess.captures.b.map(piece => pieceIcon[piece]).join(" ") || "none";
+    }
+
+    function resetBackgammon() {
+      state.bg.points = Array.from({ length: 24 }, () => []);
+      addCheckers(23, "w", 2);
+      addCheckers(12, "w", 5);
+      addCheckers(7, "w", 3);
+      addCheckers(5, "w", 5);
+      addCheckers(0, "b", 2);
+      addCheckers(11, "b", 5);
+      addCheckers(16, "b", 3);
+      addCheckers(18, "b", 5);
+      state.bg.turn = "w";
+      state.bg.dice = [];
+      state.bg.used = [];
+      state.bg.selected = null;
+      state.bg.bar = { w: 0, b: 0 };
+      state.bg.off = { w: 0, b: 0 };
+      state.bg.moveCount = 0;
+      state.bg.diceDrag = null;
+      renderBackgammon();
+      updateHeader();
+    }
+
+    function addCheckers(point, color, count) {
+      for (let i = 0; i < count; i += 1) state.bg.points[point].push(color);
+    }
+
+    function rollBackgammonDice() {
+      if (state.bg.dice.some((_, i) => !state.bg.used[i])) {
+        setStatus(`Backgammon: ${colorName(state.bg.turn)} to move`, "Use your remaining dice before rolling again.");
+        return;
+      }
+      const a = Math.ceil(Math.random() * 6);
+      const b = Math.ceil(Math.random() * 6);
+      state.bg.dice = a === b ? [a, a, a, a] : [a, b];
+      state.bg.used = state.bg.dice.map(() => false);
+      state.bg.selected = null;
+      state.bg.diceDrag = null;
+      renderBackgammon();
+      updateHeader();
+    }
+
+    function remainingDice() {
+      return state.bg.dice.map((die, i) => ({ die, i })).filter(item => !state.bg.used[item.i]);
+    }
+
+    function pointOwner(point) {
+      const stack = state.bg.points[point];
+      return stack.length ? stack[0] : null;
+    }
+
+    function allInHome(color) {
+      if (state.bg.bar[color] > 0) return false;
+      const home = color === "w" ? [0, 1, 2, 3, 4, 5] : [18, 19, 20, 21, 22, 23];
+      return state.bg.points.every((stack, i) => stack[0] !== color || home.includes(i));
+    }
+
+    function legalBackgammonTargets(from) {
+      const color = state.bg.turn;
+      const dir = color === "w" ? -1 : 1;
+      const targets = [];
+      remainingDice().forEach(({ die, i }) => {
+        let target;
+        if (from === "bar") target = color === "w" ? 24 - die : die - 1;
+        else target = from + dir * die;
+        if (target < 0 || target > 23) {
+          if (from !== "bar" && allInHome(color)) targets.push({ target: "off", dieIndex: i });
+          return;
+        }
+        const owner = pointOwner(target);
+        if (!owner || owner === color || state.bg.points[target].length === 1) targets.push({ target, dieIndex: i });
+      });
+      return targets;
+    }
+
+    function selectBackgammon(from) {
+      const color = state.bg.turn;
+      if (!remainingDice().length) {
+        setStatus(`Backgammon: ${colorName(color)} to move`, "Drag the dice onto the board first.");
+        return;
+      }
+      if (state.bg.bar[color] > 0 && from !== "bar") {
+        setStatus(`Backgammon: ${colorName(color)} to move`, "Move checkers from the bar first.");
+        return;
+      }
+      if (from !== "bar") {
+        const stack = state.bg.points[from];
+        if (!stack.length || stack[0] !== color) return;
+      }
+      state.bg.selected = from;
+      renderBackgammon();
+      updateHeader();
+    }
+
+    function moveBackgammon(target) {
+      if (state.bg.selected === null) return;
+      const color = state.bg.turn;
+      const legal = legalBackgammonTargets(state.bg.selected).find(item => item.target === target);
+      if (!legal) {
+        state.bg.selected = null;
+        renderBackgammon();
+        updateHeader();
+        return;
+      }
+      if (state.bg.selected === "bar") state.bg.bar[color] -= 1;
+      else state.bg.points[state.bg.selected].pop();
+      if (target === "off") {
+        state.bg.off[color] += 1;
+      } else {
+        const owner = pointOwner(target);
+        if (owner && owner !== color && state.bg.points[target].length === 1) {
+          state.bg.points[target].pop();
+          state.bg.bar[owner] += 1;
+        }
+        state.bg.points[target].push(color);
+      }
+      state.bg.used[legal.dieIndex] = true;
+      state.bg.selected = null;
+      state.bg.moveCount += 1;
+      if (!remainingDice().length) state.bg.turn = color === "w" ? "b" : "w";
+      renderBackgammon();
+      updateHeader();
+      if (state.bg.off[color] >= 15) setStatus(`${colorName(color)} wins backgammon`, "Start a new game to play again.");
+    }
+
+    function boardColumn(displayIndex) {
+      return displayIndex < 6 ? displayIndex + 1 : displayIndex + 2;
+    }
+
+    function renderPoint(pointIndex, top, displayIndex) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "point";
+      button.style.gridColumn = String(boardColumn(displayIndex));
+      const legal = state.bg.selected !== null && legalBackgammonTargets(state.bg.selected).some(item => item.target === pointIndex);
+      if (state.bg.selected === pointIndex) button.classList.add("selected");
+      if (legal) button.classList.add("target");
+      button.setAttribute("aria-label", `Point ${pointIndex + 1}`);
+      button.addEventListener("click", () => {
+        if (legal) moveBackgammon(pointIndex);
+        else selectBackgammon(pointIndex);
+      });
+      const stack = state.bg.points[pointIndex];
+      const visible = top ? stack.slice(0, 5) : stack.slice(0, 5);
+      visible.forEach(color => {
+        const checker = document.createElement("span");
+        checker.className = `checker ${color === "w" ? "white" : "black"}`;
+        button.appendChild(checker);
+      });
+      if (stack.length > 5) {
+        const more = document.createElement("span");
+        more.className = `checker ${stack[0] === "w" ? "white" : "black"}`;
+        more.textContent = stack.length;
+        button.appendChild(more);
+      }
+      return button;
+    }
+
+    function buildDie(value, used, ready) {
+      const die = document.createElement("button");
+      die.type = "button";
+      die.className = `die ${used ? "used" : ""} ${ready ? "ready" : ""}`;
+      die.dataset.value = String(value);
+      die.setAttribute("aria-label", ready ? "Drag dice onto board to roll" : `Die showing ${value}`);
+      for (let i = 0; i < 9; i += 1) {
+        const pip = document.createElement("span");
+        pip.className = "pip";
+        die.appendChild(pip);
+      }
+      if (ready) die.addEventListener("pointerdown", beginDiceDrag);
+      else die.addEventListener("click", () => {
+        if (!remainingDice().length) setStatus(`Backgammon: ${colorName(state.bg.turn)} to move`, "Drag the dice onto the board for the next roll.");
+      });
+      return die;
+    }
+
+    function beginDiceDrag(event) {
+      if (state.bg.dice.some((_, i) => !state.bg.used[i])) {
+        setStatus(`Backgammon: ${colorName(state.bg.turn)} to move`, "Use your remaining dice before rolling again.");
+        return;
+      }
+      event.preventDefault();
+      const original = event.currentTarget;
+      const ghost = original.cloneNode(true);
+      ghost.classList.add("dragging");
+      ghost.style.left = `${event.clientX}px`;
+      ghost.style.top = `${event.clientY}px`;
+      document.body.appendChild(ghost);
+      state.bg.diceDrag = {
+        pointerId: event.pointerId,
+        ghost,
+        moved: false,
+        startX: event.clientX,
+        startY: event.clientY
+      };
+      document.querySelector(".backgammon").classList.add("dice-drop");
+    }
+
+    function moveDiceDrag(event) {
+      const drag = state.bg.diceDrag;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 8) drag.moved = true;
+      drag.ghost.style.left = `${event.clientX}px`;
+      drag.ghost.style.top = `${event.clientY}px`;
+    }
+
+    function endDiceDrag(event) {
+      const drag = state.bg.diceDrag;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      drag.ghost.remove();
+      state.bg.diceDrag = null;
+      const board = document.querySelector(".backgammon");
+      board.classList.remove("dice-drop");
+      const rect = board.getBoundingClientRect();
+      const droppedOnBoard = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+      if (droppedOnBoard || !drag.moved) rollBackgammonDice();
+      else setStatus(`Backgammon: ${colorName(state.bg.turn)} to move`, "Drop the dice onto the board to roll.");
+    }
+
+    function renderBackgammon() {
+      topPoints.innerHTML = "";
+      bottomPoints.innerHTML = "";
+      for (let i = 12; i < 24; i += 1) topPoints.appendChild(renderPoint(i, true, i - 12));
+      for (let i = 11; i >= 0; i -= 1) bottomPoints.appendChild(renderPoint(i, false, 11 - i));
+      diceEl.innerHTML = "";
+      if (!state.bg.dice.length || !remainingDice().length) {
+        diceEl.appendChild(buildDie(5, false, true));
+        diceEl.appendChild(buildDie(2, false, true));
+        const hint = document.createElement("span");
+        hint.className = "dice-hint";
+        hint.textContent = "drag to roll";
+        diceEl.appendChild(hint);
+      } else {
+        state.bg.dice.forEach((die, i) => {
+          diceEl.appendChild(buildDie(die, state.bg.used[i], false));
+        });
+      }
+      whiteBar.textContent = `White bar ${state.bg.bar.w}`;
+      blackBar.textContent = `Black bar ${state.bg.bar.b}`;
+      whiteBar.classList.toggle("selected", state.bg.selected === "bar" && state.bg.turn === "w");
+      blackBar.classList.toggle("selected", state.bg.selected === "bar" && state.bg.turn === "b");
+      whiteOff.textContent = `White off: ${state.bg.off.w}`;
+      blackOff.textContent = `Black off: ${state.bg.off.b}`;
+    }
+
+    document.querySelectorAll(".tab").forEach(tab => tab.addEventListener("click", () => setGame(tab.dataset.game)));
+    document.getElementById("flipChess").addEventListener("click", () => {
+      state.chess.flipped = !state.chess.flipped;
+      renderChess();
+    });
+    document.getElementById("newChess").addEventListener("click", resetChess);
+    document.getElementById("newBackgammon").addEventListener("click", resetBackgammon);
+    document.addEventListener("pointermove", moveChessDrag);
+    document.addEventListener("pointerup", endChessDrag);
+    document.addEventListener("pointercancel", endChessDrag);
+    document.addEventListener("pointermove", moveDiceDrag);
+    document.addEventListener("pointerup", endDiceDrag);
+    document.addEventListener("pointercancel", endDiceDrag);
+    whiteBar.addEventListener("click", () => {
+      if (state.bg.turn === "w" && state.bg.bar.w > 0) selectBackgammon("bar");
+    });
+    blackBar.addEventListener("click", () => {
+      if (state.bg.turn === "b" && state.bg.bar.b > 0) selectBackgammon("bar");
+    });
+
+    resetChess();
+    resetBackgammon();
+    setGame("chess");
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
